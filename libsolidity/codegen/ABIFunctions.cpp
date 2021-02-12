@@ -1029,7 +1029,7 @@ string ABIFunctions::abiEncodingFunctionFunctionType(
 )
 {
 	solAssert(_from.kind() == FunctionType::Kind::External, "");
-	solAssert(_from == _to, "");
+	solAssert(_from.isImplicitlyConvertibleTo(_to), "");
 
 	string functionName =
 		"abi_encode_" +
@@ -1042,11 +1042,13 @@ string ABIFunctions::abiEncodingFunctionFunctionType(
 		return createFunction(functionName, [&]() {
 			return Whiskers(R"(
 				function <functionName>(addr, function_id, pos) {
+					addr, function_id := <convert>(addr, function_id)
 					mstore(pos, <combineExtFun>(addr, function_id))
 				}
 			)")
 			("functionName", functionName)
 			("combineExtFun", m_utils.combineExternalFunctionIdFunction())
+			("convert", m_utils.conversionFunction(_from, _to))
 			.render();
 		});
 	else
